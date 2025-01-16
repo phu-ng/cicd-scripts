@@ -39,7 +39,7 @@ jobs:
           key: ${{ hashFiles('**/pom.xml') }}
 
       - name: Deploy to Dev
-        uses: ./.github/workflows/deploy.yml
+        uses: phu-ng/cicd-scripts/.github/workflows/deploy.yml@main
         with:
           imageTag: "${{ env.sha_short }}"
 
