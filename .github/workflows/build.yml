@@ -8,10 +8,6 @@ env:
   REGION: ap-southeast-1
   ECR_URI: 817667413626.dkr.ecr.ap-southeast-1.amazonaws.com/test
 
-permissions:
-  id-token: write
-  contents: read
-
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -46,7 +42,7 @@ jobs:
         uses: ./.github/workflows/deploy.yml
         with:
           imageTag: "${{ env.sha_short }}"
-          
+
 #      - name: Run test
 #        run: ./mvnw test
 #
