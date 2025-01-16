@@ -41,7 +41,7 @@ jobs:
   Deploy:
     uses: phu-ng/cicd-scripts/.github/workflows/deploy.yml@main
     with:
-      imageTag: "${{ env.sha_short }}"
+      imageTag: ${{ env.sha_short }}
 
 #      - name: Run test
 #        run: ./mvnw test
