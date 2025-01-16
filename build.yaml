@@ -1,0 +1,17 @@
+name: Build
+
+on:
+  workflow_call: # Allows this workflow to be called from other repositories
+    inputs:
+      buildArgs:
+        type: string
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Build
+        run: |
+          echo "Building with args: ${{ inputs.buildArgs }}"
+
