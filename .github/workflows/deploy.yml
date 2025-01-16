@@ -1,0 +1,17 @@
+name: Deploy App
+
+on:
+  workflow_call:
+    inputs:
+      imageTag:
+        type: string
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Deploy
+        run: echo " ${{ inputs.imageTag }} "
