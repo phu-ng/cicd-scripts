@@ -6,6 +6,9 @@ on:
       imageTag:
         type: string
         required: true
+      appName:
+        type: string
+        required: true
 
 jobs:
   deploy:
@@ -14,4 +17,7 @@ jobs:
 
     steps:
       - name: Deploy
-        run: echo " ${{ inputs.imageTag }} "
+        run: |
+          echo " ${{ inputs.imageTag }} "
+          echo helm pull from ECR
+          echo helm upgrade --install " ${{ inputs.appName }} " -f ./deployments/dev/values.yaml

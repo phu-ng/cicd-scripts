@@ -2,6 +2,10 @@ name: Java Maven Build
 
 on:
   workflow_call: # Allows this workflow to be called from other repositories
+    inputs:
+      appName:
+        type: string
+        required: true
 
 env:
   RUNNER_ROLE_ARN: arn:aws:iam::817667413626:role/GitHubRunner
@@ -12,13 +16,10 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
-    outputs:
-      sha-short: ${{ steps.set-short-sha.outputs.SHA_SHORT }}
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
+      - name: Build Code
+        run: echo Building code
 
       - name: Set Tag
         run: echo "release_tag=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
@@ -29,29 +30,56 @@ jobs:
           echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21' # Adjust this to the JDK version your project requires
-          distribution: 'temurin' # Choose the JDK distribution (temurin, zulu, etc.)
-          cache: 'maven'
 
-      - name: Cache local Maven repository
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2/repository
-          key: ${{ hashFiles('**/pom.xml') }}
-
+#  build:
+#    runs-on: ubuntu-22.04
+#    timeout-minutes: 10
+#    outputs:
+#      sha-short: ${{ steps.set-short-sha.outputs.SHA_SHORT }}
+#    steps:
+#      - name: Checkout Code
+#        uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 1
+#
+#      - name: Set Tag
+#        run: echo "release_tag=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+#
+#      - name: Set Short SHA
+#        id: set-short-sha
+#        run: |
+#          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+#          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+#
+#      - name: Set up JDK 21
+#        uses: actions/setup-java@v4
+#        with:
+#          java-version: '21' # Adjust this to the JDK version your project requires
+#          distribution: 'temurin' # Choose the JDK distribution (temurin, zulu, etc.)
+#          cache: 'maven'
+#
+#      - name: Cache local Maven repository
+#        uses: actions/cache@v4
+#        with:
+#          path: ~/.m2/repository
+#          key: ${{ hashFiles('**/pom.xml') }}
+#
+#
   deploy:
     needs: build
     uses: phu-ng/cicd-scripts/.github/workflows/deploy.yml@main
     with:
       imageTag: ${{ needs.build.outputs.sha-short }}
+      appName: ${{ inputs.imageTag }}
 
 #      - name: Run test
 #        run: ./mvnw test
 #
 #      - name: Create Jar file
+
+
+
+
 #        run: ./mvnw package -Dmaven.test.skip
 
 #      - name: Configure AWS Credentials
