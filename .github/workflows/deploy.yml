@@ -16,8 +16,8 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Deploy
-        run: |
-          echo " ${{ inputs.imageTag }} "
-          echo helm pull from ECR
-          echo helm upgrade --install " ${{ inputs.appName }} " -f ./deployments/dev/values.yaml
+      - name: Pull helm chart from ECR
+        run: echo helm pull from ECR
+
+      - name: Deploy with new value or image tag
+        run: echo helm upgrade --install " ${{ inputs.appName }} " -f ./deployments/dev/values.yaml
