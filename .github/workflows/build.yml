@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Build Code
-        run: echo Building code
+        run: echo Building code "${{ inputs.appName }}"
 
       - name: Set Tag
         run: echo "release_tag=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
