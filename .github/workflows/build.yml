@@ -16,6 +16,8 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
+    outputs:
+      sha-short: ${{ steps.set-short-sha.outputs.SHA_SHORT }}
 
     steps:
       - name: Build Code
@@ -70,7 +72,7 @@ jobs:
     uses: phu-ng/cicd-scripts/.github/workflows/deploy.yml@main
     with:
       imageTag: ${{ needs.build.outputs.sha-short }}
-      appName: ${{ inputs.imageTag }}
+      appName: ${{ inputs.appName }}
 
 #      - name: Run test
 #        run: ./mvnw test
