@@ -9,6 +9,9 @@ on:
       namespace:
         type: string
         required: true
+      helmVersion:
+        type: string
+        default: 0.1.0
 
 env:
   RUNNER_ROLE_ARN: arn:aws:iam::817667413626:role/GitHubRunner
