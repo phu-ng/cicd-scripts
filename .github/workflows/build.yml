@@ -6,6 +6,9 @@ on:
       appName:
         type: string
         required: true
+      namespace:
+        type: string
+        required: true
 
 env:
   RUNNER_ROLE_ARN: arn:aws:iam::817667413626:role/GitHubRunner
@@ -73,7 +76,7 @@ jobs:
     with:
       imageTag: ${{ needs.build.outputs.sha-short }}
       appName: ${{ inputs.appName }}
-
+      namespace: ${{ inputs.namespace }}
 #      - name: Run test
 #        run: ./mvnw test
 #
