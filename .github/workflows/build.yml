@@ -79,6 +79,7 @@ jobs:
     with:
       appName: ${{ inputs.appName }}
       namespace: ${{ inputs.namespace }}
+      helmVersion: ${{ inputs.helmVersion }}
 #      - name: Run test
 #        run: ./mvnw test
 #
