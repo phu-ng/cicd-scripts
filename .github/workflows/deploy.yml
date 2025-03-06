@@ -26,4 +26,4 @@ jobs:
         run: echo helm pull from ECR
 
       - name: Deploy with new value or image tag
-        run: echo helm upgrade --install "${{ inputs.appName }}" -f ./deployments/dev/values.yaml --set image.tag="${{ inputs.imageTag }}" --version "${{ inputs.appName }}"
+        run: echo helm upgrade --install "${{ inputs.appName }}" -f ./deployments/dev/values.yaml --set image.tag="${{ inputs.imageTag }}" --version "${{ inputs.helmVersion }}" --namespace "${{ inputs.namespace }}"

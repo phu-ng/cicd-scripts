@@ -74,7 +74,6 @@ jobs:
     needs: build
     uses: phu-ng/cicd-scripts/.github/workflows/deploy.yml@main
     with:
-      imageTag: ${{ needs.build.outputs.sha-short }}
       appName: ${{ inputs.appName }}
       namespace: ${{ inputs.namespace }}
 #      - name: Run test
