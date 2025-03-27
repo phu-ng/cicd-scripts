@@ -1,29 +1,34 @@
 name: Java Maven Build
 
-inputs:
-  appName:
-    type: string
-    required: true
-  javaVersion:
-    type: string
-    default: 17
-  javaFlavour:
-    type: string
-    default: temurin
-  buildCommand:
-    type: string
-    default: 'mvn clean package -DskipTests'
+on:
+  workflow_call: # Allows this workflow to be called from other repositories
+    inputs:
+      appName:
+        type: string
+        required: true
+      javaVersion:
+        type: string
+        default: 17
+      javaFlavour:
+        type: string
+        default: temurin
+      buildCommand:
+        type: string
+        default: 'mvn clean package -DskipTests'
 
 # env:
 #   RUNNER_ROLE_ARN: arn:aws:iam::817667413626:role/GitHubRunner
 #   REGION: ap-southeast-1
 #   ECR_URI: 817667413626.dkr.ecr.ap-southeast-1.amazonaws.com/test
 
-runs:
-  using: "composite"
-  steps:
-    - name: Install java
-      run: echo Install java
+jobs:
+  build_java:
+    name: Build Java
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Install java
+        run: echo Install java
 
-    - name: Build Code
-      run: echo Building the code for application "${{ inputs.appName }}" using java "${{ inputs.javaFlavour }}" "${{ inputs.javaVersion }}"
+      - name: Build Code
+        run: echo Building the code for application "${{ inputs.appName }}" using java "${{ inputs.javaFlavour }}" "${{ inputs.javaVersion }}"
