@@ -12,6 +12,9 @@ on:
       namespace:
         type: string
         required: true
+      helmChart:
+        type: string
+        default: "generic"
       helmVersion:
         type: string
         default: "0.1.0"

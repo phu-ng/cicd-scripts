@@ -9,7 +9,7 @@ on:
 
 jobs:
   code_analysis:
-    name: Code Analysis
+    name: CodeQL Scanning
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:

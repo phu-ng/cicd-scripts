@@ -1,0 +1,20 @@
+name: Post Run Metric
+
+on:
+  workflow_call: # Allows this workflow to be called from other repositories
+    inputs:
+      appName:
+        type: string
+        required: true
+      namespace:
+        type: string
+        default: "default"
+
+jobs:
+  post_run_metric:
+    name: Validate Deploy
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Check kubectl
+        run: echo "Running kubectl check command..."

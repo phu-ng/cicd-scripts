@@ -1,0 +1,27 @@
+name: Java Unit Test
+
+on:
+  workflow_call: # Allows this workflow to be called from other repositories
+    inputs:
+      javaVersion:
+        type: string
+        default: 17
+      javaFlavour:
+        type: string
+        default: temurin
+      buildCommand:
+        type: string
+        default: 'mvn test'
+      skip: 
+        type: boolean
+        default: false
+
+
+jobs:
+  unit_test:
+    name: Java Unit Test
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Test
+        run: echo "Running unit test..."
