@@ -26,6 +26,9 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
+      - name: Install java
+        run: echo Install java
+        
       - name: Build Code
         run: echo Building the code for application "${{ inputs.appName }}" using java "${{ inputs.javaFlavour }}" "${{ inputs.javaVersion }}"
 
