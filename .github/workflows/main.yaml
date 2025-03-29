@@ -75,7 +75,7 @@ jobs:
           }
 
   use_sha:
-    needs: load_config
+    needs: gather_information
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     env:
