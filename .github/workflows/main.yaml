@@ -2,6 +2,9 @@ name: Java Maven Build
 
 on:
   workflow_call:
+    secrets:
+      GH_TOKEN:
+        required: true
 
 env:
   RUNNER_ROLE_ARN: arn:aws:iam::817667413626:role/GitHubRunner
