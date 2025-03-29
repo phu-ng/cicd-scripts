@@ -84,10 +84,6 @@ jobs:
 #        run: ./mvnw test
 #
 #      - name: Create Jar file
-
-
-
-
 #        run: ./mvnw package -Dmaven.test.skip
 
 #      - name: Configure AWS Credentials

@@ -3,20 +3,15 @@ name: Java Maven Build
 on:
   workflow_call: # Allows this workflow to be called from other repositories
     inputs:
-      javaVersion:
+      java_version:
         type: string
         default: 17
-      javaFlavour:
+      java_flavour:
         type: string
         default: temurin
-      buildCommand:
+      build_command:
         type: string
         default: './mvnw compile'
-
-# env:
-#   RUNNER_ROLE_ARN: arn:aws:iam::817667413626:role/GitHubRunner
-#   REGION: ap-southeast-1
-#   ECR_URI: 817667413626.dkr.ecr.ap-southeast-1.amazonaws.com/test
 
 jobs:
   build_java:
@@ -24,8 +19,18 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
-      - name: Install java
-        run: echo Install java
+#      - name: Set up JDK
+#        uses: actions/setup-java@v4
+#        with:
+#          java-version: ${{ inputs.java_version }}
+#          distribution: ${{ inputs.java_flavour }}
+#          cache: 'maven'
+#
+#      - name: Cache local Maven repository
+#        uses: actions/cache@v4
+#        with:
+#          path: ~/.m2/repository
+#          key: ${{ hashFiles('**/pom.xml') }}
 
       - name: Build Code
-        run: echo Building the code for application "${{ inputs.appName }}" using java "${{ inputs.javaFlavour }}" "${{ inputs.javaVersion }}"
+        run: echo Building the code using java "${{ inputs.java_flavour }}" "${{ inputs.java_version }}"

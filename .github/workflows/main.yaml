@@ -20,10 +20,8 @@ jobs:
 
   build_java:
     needs: gather_information
-    runs-on: ubuntu-22.04
-    timeout-minutes: 10
     if: needs.gather_information.outputs.language == 'java'
-
-    steps:
-      - name: Running java
-        run: echo this is java
+    uses: phu-ng/cicd-scripts/.github/workflows/build_java.yaml@main
+    with:
+      java_version: needs.gather_information.outputs.java_version
+      build_command: needs.gather_information.outputs.build_command
