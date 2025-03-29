@@ -1,27 +1,41 @@
-name: Java Unit Test
+name: Unit Test Java
 
 on:
   workflow_call: # Allows this workflow to be called from other repositories
     inputs:
-      javaVersion:
+      java_version:
         type: string
         default: 17
-      javaFlavour:
+      java_flavour:
         type: string
         default: temurin
-      buildCommand:
+      command:
         type: string
-        default: 'mvn test'
-      skip: 
-        type: boolean
-        default: false
-
+        default: './mvnw test'
 
 jobs:
-  unit_test:
-    name: Java Unit Test
+  unit_test_java:
+    name: Unit Test Java
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
-      - name: Test
-        run: echo "Running unit test..."
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java_version }}
+          distribution: ${{ inputs.java_flavour }}
+          cache: 'maven'
+
+      - name: Cache local Maven repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ hashFiles('**/pom.xml') }}
+
+      - name: Run test
+        run: ${{ inputs.command }}
