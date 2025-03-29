@@ -33,4 +33,4 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Print SHA from previous job
-        run: echo "Received SHA is ${{ needs.gather_information.outputs.short_sha }}"
+        run: echo "SHA is ${{ needs.gather_information.outputs.short_sha }}"
