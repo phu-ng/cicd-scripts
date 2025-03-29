@@ -9,28 +9,28 @@ env:
   ECR_URI: 817667413626.dkr.ecr.ap-southeast-1.amazonaws.com/test
 
 jobs:
-  gather_information:
-    name: Gather Information
-    runs-on: ubuntu-22.04
-    timeout-minutes: 10
-    outputs:
-      short_sha: ${{ steps.set_short_sha.outputs.short_sha }}
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-#      - name: Set Tag
-#        run: echo "release_tag=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-
-      - name: Set Short SHA
-        id: set_short_sha
-        run: |
-          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-          echo "${{ github.event.repository.name }}"
+#  gather_information:
+#    name: Gather Information
+#    runs-on: ubuntu-22.04
+#    timeout-minutes: 10
+#    outputs:
+#      short_sha: ${{ steps.set_short_sha.outputs.short_sha }}
+#
+#    steps:
+#      - name: Checkout Code
+#        uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 1
+#
+##      - name: Set Tag
+##        run: echo "release_tag=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+#
+#      - name: Set Short SHA
+#        id: set_short_sha
+#        run: |
+#          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+#          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+#          echo "${{ github.event.repository.name }}"
 
   checkout_deployment_repo:
     name: Checkout Deployment Repo
@@ -38,12 +38,16 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Clone repo
+#      - name: Clone repo
+#        run: |
+#          git clone https://git:${{ secrets.GH_TOKEN }}@github.com/phu-ng/deployments.git
+#          cd deployments
+#          ls
+      - name: Debug Secret Length
         run: |
-          git clone https://git:${{ secrets.GH_TOKEN }}@github.com/phu-ng/deployments.git
-          cd deployments
-          ls
-
+          echo "Secret length: ${#SECRET}"
+        env:
+          SECRET: ${{ secrets.GH_TOKEN }}
 #  use_sha:
 #    needs: gather_information
 #    runs-on: ubuntu-22.04
