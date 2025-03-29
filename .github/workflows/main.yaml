@@ -110,7 +110,7 @@ jobs:
     if: needs.gather_information.outputs.language == 'nodejs'
     uses: phu-ng/cicd-scripts/.github/workflows/unit_test_nodejs.yaml@main
     with:
-      java_version: ${{ needs.gather_information.outputs.language_version }}
+      node_version: ${{ needs.gather_information.outputs.language_version }}
       command: ${{ needs.gather_information.outputs.test_command }}
 
   build_nodejs:
@@ -119,5 +119,5 @@ jobs:
     if: needs.gather_information.outputs.language == 'nodejs'
     uses: phu-ng/cicd-scripts/.github/workflows/build_nodejs.yaml@main
     with:
-      java_version: ${{ needs.gather_information.outputs.language_version }}
+      node_version: ${{ needs.gather_information.outputs.language_version }}
       command: ${{ needs.gather_information.outputs.build_command }}

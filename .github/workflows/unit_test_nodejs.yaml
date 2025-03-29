@@ -1,4 +1,4 @@
-name: Build Nodejs App
+name: Test Nodejs App
 
 on:
   workflow_call: # Allows this workflow to be called from other repositories
@@ -11,8 +11,8 @@ on:
         default: 'npm test'
 
 jobs:
-  build_node:
-    name: Build Node
+  test_node:
+    name: Test Node
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
