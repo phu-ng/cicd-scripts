@@ -2,6 +2,9 @@ name: Gather Information
 
 on:
   workflow_call: # Allows this workflow to be called from other repositories
+    secrets:
+      GH_TOKEN:
+        required: true
 
 jobs:
   gather_information:

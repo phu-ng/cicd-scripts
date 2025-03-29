@@ -15,6 +15,8 @@ jobs:
   gather_information:
     name: Gather Information
     uses: phu-ng/cicd-scripts/.github/workflows/gather_information.yaml@main
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
   build_java:
     needs: gather_information
