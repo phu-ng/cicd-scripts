@@ -103,3 +103,21 @@ jobs:
     with:
       java_version: ${{ needs.gather_information.outputs.language_version }}
       command: ${{ needs.gather_information.outputs.build_command }}
+
+  unit_test_nodejs:
+    name: Test Nodejs
+    needs: gather_information
+    if: needs.gather_information.outputs.language == 'nodejs'
+    uses: phu-ng/cicd-scripts/.github/workflows/unit_test_nodejs.yaml@main
+    with:
+      java_version: ${{ needs.gather_information.outputs.language_version }}
+      command: ${{ needs.gather_information.outputs.test_command }}
+
+  build_nodejs:
+    name: Build Nodejs
+    needs: unit_test_nodejs
+    if: needs.gather_information.outputs.language == 'nodejs'
+    uses: phu-ng/cicd-scripts/.github/workflows/build_nodejs.yaml@main
+    with:
+      java_version: ${{ needs.gather_information.outputs.language_version }}
+      command: ${{ needs.gather_information.outputs.build_command }}

@@ -1,0 +1,49 @@
+name: Build Nodejs App
+
+on:
+  workflow_call: # Allows this workflow to be called from other repositories
+    inputs:
+      node_version:
+        type: string
+        default: 20
+      command:
+        type: string
+        default: 'npm run build'
+
+jobs:
+  build_node:
+    name: Build Node
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+          cache: 'npm'
+
+      - name: Cache local npm repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ hashFiles('**/package-lock.json') }}
+
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: List the state of node modules
+        continue-on-error: true
+        run: npm list
+
+      - name: Build
+        run: ${{ inputs.command }}
+
+#      - name: Store artifacts
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: dist-without-markdown
+#          path: |
+#            dist
+#            !dist/**/*.md
