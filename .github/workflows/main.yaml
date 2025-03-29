@@ -32,6 +32,18 @@ jobs:
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "${{ github.event.repository.name }}"
 
+  checkout_deployment_repo:
+    name: Checkout Deployment Repo
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Clone repo
+        run: |
+          git clone https://git:${{ secrets.GH_TOKEN }}@github.com/phu-ng/deployments.git
+          cd deployments
+          ls
+
 #  use_sha:
 #    needs: gather_information
 #    runs-on: ubuntu-22.04

@@ -3,9 +3,6 @@ name: Java Maven Build
 on:
   workflow_call: # Allows this workflow to be called from other repositories
     inputs:
-      appName:
-        type: string
-        required: true
       javaVersion:
         type: string
         default: 17
@@ -14,7 +11,7 @@ on:
         default: temurin
       buildCommand:
         type: string
-        default: 'mvn clean package -DskipTests'
+        default: './mvnw compile'
 
 # env:
 #   RUNNER_ROLE_ARN: arn:aws:iam::817667413626:role/GitHubRunner
