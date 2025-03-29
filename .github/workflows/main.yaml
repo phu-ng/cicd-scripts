@@ -18,10 +18,18 @@ jobs:
     secrets:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
-  build_java:
+  check:
     needs: gather_information
-    if: needs.gather_information.outputs.language == 'java'
-    uses: phu-ng/cicd-scripts/.github/workflows/build_java.yaml@main
-    with:
-      java_version: needs.gather_information.outputs.java_version
-      build_command: needs.gather_information.outputs.build_command
+    steps:
+      - name: check
+        run: echo "${{needs.gather_information.outputs.language }}"
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+
+#  build_java:
+#    needs: gather_information
+#    if: needs.gather_information.outputs.language == 'java'
+#    uses: phu-ng/cicd-scripts/.github/workflows/build_java.yaml@main
+#    with:
+#      java_version: needs.gather_information.outputs.language_version
+#      build_command: needs.gather_information.outputs.build_command
