@@ -1,0 +1,36 @@
+name: Java Maven Build
+
+on:
+  workflow_call:
+
+env:
+  RUNNER_ROLE_ARN: arn:aws:iam::817667413626:role/GitHubRunner
+  REGION: ap-southeast-1
+  ECR_URI: 817667413626.dkr.ecr.ap-southeast-1.amazonaws.com/test
+
+jobs:
+  gather_information:
+    name: Gather Information
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    outputs:
+      short_sha: ${{ steps.set_short_sha.outputs.SHORT_SHA }}
+
+    steps:
+#      - name: Set Tag
+#        run: echo "release_tag=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - name: Set Short SHA
+        id: set_short_sha
+        run: |
+          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        
+    
+  use_sha:
+    needs: gather_information
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Print SHA from previous job
+        run: echo "Received SHA is ${{ needs.gather_information.outputs.short_sha }}"

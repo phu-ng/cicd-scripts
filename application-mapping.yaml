@@ -1,0 +1,8 @@
+service1:
+  appName: service1
+  language: java
+  languageVersion: 21
+  unitTest: True
+  helmChart: generic
+  dockerfileLocation: ./Dockerfile
+  namespace: default
