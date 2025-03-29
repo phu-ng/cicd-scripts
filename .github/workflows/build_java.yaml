@@ -40,10 +40,9 @@ jobs:
       - name: Compile Code
         run: ${{ inputs.command }}
 
-#      - name: Store artifacts
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: dist-without-markdown
-#          path: |
-#            dist
-#            !dist/**/*.md
+      - name: Store artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jar
+          path: target/*.jar
+          retention-days: 1

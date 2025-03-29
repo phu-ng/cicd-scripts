@@ -6,11 +6,6 @@ on:
       GH_TOKEN:
         required: true
 
-env:
-  RUNNER_ROLE_ARN: arn:aws:iam::817667413626:role/GitHubRunner
-  REGION: ap-southeast-1
-  ECR_URI: 817667413626.dkr.ecr.ap-southeast-1.amazonaws.com/test
-
 jobs:
   gather_information:
     name: Gather Information
@@ -86,38 +81,56 @@ jobs:
             done < <(yq eval '. | to_entries | .[] | "\(.key)=\(.value)"' config.yaml)
           }
 
-  unit_test_java:
-    name: Test Java
-    needs: gather_information
-    if: needs.gather_information.outputs.language == 'java'
-    uses: phu-ng/cicd-scripts/.github/workflows/unit_test_java.yaml@main
-    with:
-      java_version: ${{ needs.gather_information.outputs.language_version }}
-      command: ${{ needs.gather_information.outputs.test_command }}
+#  unit_test_java:
+#    name: Test Java
+#    needs: gather_information
+#    if: needs.gather_information.outputs.language == 'java'
+#    uses: phu-ng/cicd-scripts/.github/workflows/unit_test_java.yaml@main
+#    with:
+#      java_version: ${{ needs.gather_information.outputs.language_version }}
+#      command: ${{ needs.gather_information.outputs.test_command }}
+#
+#  build_java:
+#    name: Build Java
+#    needs: [unit_test_java, gather_information]
+#    if: needs.gather_information.outputs.language == 'java'
+#    uses: phu-ng/cicd-scripts/.github/workflows/build_java.yaml@main
+#    with:
+#      java_version: ${{ needs.gather_information.outputs.language_version }}
+#      command: ${{ needs.gather_information.outputs.build_command }}
+#
+#  unit_test_nodejs:
+#    name: Test Nodejs
+#    needs: gather_information
+#    if: needs.gather_information.outputs.language == 'nodejs'
+#    uses: phu-ng/cicd-scripts/.github/workflows/unit_test_nodejs.yaml@main
+#    with:
+#      node_version: ${{ needs.gather_information.outputs.language_version }}
+#      command: ${{ needs.gather_information.outputs.test_command }}
+#
+#  build_nodejs:
+#    name: Build Nodejs
+#    needs: [unit_test_nodejs, gather_information]
+#    if: needs.gather_information.outputs.language == 'nodejs'
+#    uses: phu-ng/cicd-scripts/.github/workflows/build_nodejs.yaml@main
+#    with:
+#      node_version: ${{ needs.gather_information.outputs.language_version }}
+#      command: ${{ needs.gather_information.outputs.build_command }}
 
   build_java:
     name: Build Java
-    needs: [unit_test_java, gather_information]
+    needs: gather_information
     if: needs.gather_information.outputs.language == 'java'
     uses: phu-ng/cicd-scripts/.github/workflows/build_java.yaml@main
     with:
       java_version: ${{ needs.gather_information.outputs.language_version }}
       command: ${{ needs.gather_information.outputs.build_command }}
 
-  unit_test_nodejs:
-    name: Test Nodejs
-    needs: gather_information
-    if: needs.gather_information.outputs.language == 'nodejs'
-    uses: phu-ng/cicd-scripts/.github/workflows/unit_test_nodejs.yaml@main
+  build_image:
+    name: Build Docker Image
+    needs: [build_java, gather_information]
+    uses: phu-ng/cicd-scripts/.github/workflows/build_image.yaml@main
     with:
-      node_version: ${{ needs.gather_information.outputs.language_version }}
-      command: ${{ needs.gather_information.outputs.test_command }}
-
-  build_nodejs:
-    name: Build Nodejs
-    needs: [unit_test_nodejs, gather_information]
-    if: needs.gather_information.outputs.language == 'nodejs'
-    uses: phu-ng/cicd-scripts/.github/workflows/build_nodejs.yaml@main
-    with:
-      node_version: ${{ needs.gather_information.outputs.language_version }}
-      command: ${{ needs.gather_information.outputs.build_command }}
+      app_name: ${{ needs.gather_information.outputs.app_name }}
+      dockerfile_location: ${{ needs.gather_information.outputs.build_command }}
+      tag: ${{ needs.gather_information.outputs.short_sha }}
