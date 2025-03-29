@@ -75,7 +75,7 @@ jobs:
           }
 
   use_sha:
-    needs: checkout_deployment_repo
+    needs: load_config
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     env:
