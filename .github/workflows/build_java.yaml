@@ -33,4 +33,4 @@ jobs:
           key: ${{ hashFiles('**/pom.xml') }}
 
       - name: Compile Code
-        run: ${{ input.build_command }}
+        run: ${{ inputs.build_command }}
