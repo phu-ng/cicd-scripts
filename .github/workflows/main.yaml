@@ -30,7 +30,7 @@ jobs:
         run: |
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-          echo "${{ github.repository }}"
+          echo "${{ github.event.repository.name }}"
 
 #  use_sha:
 #    needs: gather_information
