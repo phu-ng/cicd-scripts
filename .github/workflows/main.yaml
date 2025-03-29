@@ -30,14 +30,14 @@ jobs:
         run: |
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-        
-    
-  use_sha:
-    needs: gather_information
-    runs-on: ubuntu-22.04
-    timeout-minutes: 10
-    env:
-      OUTPUT: ${{needs.gather_information.outputs.short_sha}}
-    steps:
-      - name: Print SHA from previous job
-        run: echo "SHA is $OUTPUT"
+          echo "${{ github.repository }}"
+
+#  use_sha:
+#    needs: gather_information
+#    runs-on: ubuntu-22.04
+#    timeout-minutes: 10
+#    env:
+#      OUTPUT: ${{needs.gather_information.outputs.short_sha}}
+#    steps:
+#      - name: Print SHA from previous job
+#        run: echo "SHA is $OUTPUT"
