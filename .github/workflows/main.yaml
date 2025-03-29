@@ -97,7 +97,7 @@ jobs:
 
   build_java:
     name: Build Java
-    needs: unit_test_java
+    needs: [unit_test_java, gather_information]
     if: needs.gather_information.outputs.language == 'java'
     uses: phu-ng/cicd-scripts/.github/workflows/build_java.yaml@main
     with:
@@ -115,7 +115,7 @@ jobs:
 
   build_nodejs:
     name: Build Nodejs
-    needs: unit_test_nodejs
+    needs: [unit_test_nodejs, gather_information]
     if: needs.gather_information.outputs.language == 'nodejs'
     uses: phu-ng/cicd-scripts/.github/workflows/build_nodejs.yaml@main
     with:

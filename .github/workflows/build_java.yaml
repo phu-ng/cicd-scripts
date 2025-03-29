@@ -38,7 +38,7 @@ jobs:
           key: ${{ hashFiles('**/pom.xml') }}
 
       - name: Compile Code
-        run: ${{ inputs.build_command }}
+        run: ${{ inputs.command }}
 
 #      - name: Store artifacts
 #        uses: actions/upload-artifact@v4
