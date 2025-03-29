@@ -17,12 +17,18 @@ jobs:
       short_sha: ${{ steps.set_short_sha.outputs.short_sha }}
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
 #      - name: Set Tag
 #        run: echo "release_tag=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
       - name: Set Short SHA
         id: set_short_sha
         run: |
+          echo "short_sha=$(git rev-parse --short HEAD)"
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
         
@@ -31,8 +37,8 @@ jobs:
     needs: gather_information
     runs-on: ubuntu-22.04
     timeout-minutes: 10
-    env:
-      OUTPUT: ${{needs.gather_information.outputs.short_sha}}
     steps:
-      - name: Print SHA from previous job
+      - env:
+          OUTPUT: ${{needs.gather_information.outputs.short_sha}}
+        name: Print SHA from previous job
         run: echo "SHA is $OUTPUT"
