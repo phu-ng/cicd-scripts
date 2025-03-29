@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     outputs:
-      short_sha: ${{ steps.set_short_sha.outputs.SHORT_SHA }}
+      short_sha: ${{ steps.set_short_sha.outputs.short_sha }}
 
     steps:
 #      - name: Set Tag
