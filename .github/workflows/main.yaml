@@ -59,7 +59,7 @@ jobs:
       - name: Load application config
         id: load_config
         run: |
-          if [[ "${{GITHUB_REF_NAME}}" == "main"]]; then
+          if [[ "${GITHUB_REF_NAME}" == "main"]]; then
             cd deployments/dev/${{ github.event.repository.name }}
           else
             cd deployments/staging/${{ github.event.repository.name }}
