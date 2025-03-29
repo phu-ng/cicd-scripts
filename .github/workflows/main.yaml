@@ -91,5 +91,5 @@ jobs:
     if: needs.gather_information.outputs.language == 'java'
     uses: phu-ng/cicd-scripts/.github/workflows/build_java.yaml@main
     with:
-      java_version: needs.gather_information.outputs.language_version
-      build_command: needs.gather_information.outputs.build_command
+      java_version: ${{ needs.gather_information.outputs.language_version }}
+      build_command: ${{ needs.gather_information.outputs.build_command }}
