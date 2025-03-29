@@ -12,37 +12,39 @@ env:
   ECR_URI: 817667413626.dkr.ecr.ap-southeast-1.amazonaws.com/test
 
 jobs:
-#  gather_information:
-#    name: Gather Information
-#    runs-on: ubuntu-22.04
-#    timeout-minutes: 10
-#    outputs:
-#      short_sha: ${{ steps.set_short_sha.outputs.short_sha }}
-#
-#    steps:
-#      - name: Checkout Code
-#        uses: actions/checkout@v4
-#        with:
-#          fetch-depth: 1
-#
-##      - name: Set Tag
-##        run: echo "release_tag=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-#
-#      - name: Set Short SHA
-#        id: set_short_sha
-#        run: |
-#          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-#          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-#          echo "${{ github.event.repository.name }}"
-
-  checkout_deployment_repo:
-    name: Checkout Deployment Repo
+  gather_information:
+    name: Gather Information
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     outputs:
+      short_sha: ${{ steps.set_short_sha.outputs.short_sha }}
       language: ${{ steps.load_config.outputs.language }}
+      app_name: ${{ steps.load_config.outputs.app_name }}
+      language_version: ${{ steps.load_config.outputs.language_version }}
+      build_command: ${{ steps.load_config.outputs.build_command }}
+      test_command: ${{ steps.load_config.outputs.test_command }}
+      unit_test_enabled: ${{ steps.load_config.outputs.unit_test_enabled }}
+      codeql_enabled: ${{ steps.load_config.outputs.codeql_enabled }}
+      helm_chart: ${{ steps.load_config.outputs.helm_chart }}
+      namespace: ${{ steps.load_config.outputs.namespace }}
+      dockerfile_location: ${{ steps.load_config.outputs.dockerfile_location }}
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+#      - name: Set Tag
+#        run: echo "release_tag=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - name: Set Short SHA
+        id: set_short_sha
+        run: |
+          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "${{ github.event.repository.name }}"
+
       - name: Clone Deployment Repo
         run: |
           git clone https://git:${{ secrets.GH_TOKEN }}@github.com/phu-ng/deployments.git
@@ -53,12 +55,15 @@ jobs:
 #          git add .
 #          git commit -m "Update from GitHub Actions"
 #          git push origin main
-      - name: Read application build detail
+
+      - name: Load application config
         id: load_config
         run: |
-          cd deployments
-          cd dev
-          cd ${{ github.event.repository.name }}
+          if [[ "${{GITHUB_REF_NAME}}" == "main"]]; then
+            cd deployments/dev/${{ github.event.repository.name }}
+          else
+            cd deployments/staging/${{ github.event.repository.name }}
+          fi
           pwd
           ls -lha
           {
@@ -66,7 +71,7 @@ jobs:
             while IFS="=" read -r key value; do
               echo "  $key: $value"
               echo "$key=$value" >> $GITHUB_OUTPUT
-            done < <(yq eval '. | to_entries | .[] | "\(.key)=\(.value)"' build_config.yaml)
+            done < <(yq eval '. | to_entries | .[] | "\(.key)=\(.value)"' config.yaml)
           }
 
   use_sha:
@@ -74,7 +79,11 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     env:
-      OUTPUT: ${{needs.checkout_deployment_repo.outputs.language}}
+      OUTPUT: ${{needs.gather_information.outputs.language}}
+      OUTPUT1: ${{needs.gather_information.outputs.app_name}}
+
     steps:
       - name: Print SHA from previous job
         run: echo "language is $OUTPUT"
+      - name: App name
+        run: echo "app name is $OUTPUT1"
