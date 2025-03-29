@@ -39,27 +39,38 @@ jobs:
     name: Checkout Deployment Repo
     runs-on: ubuntu-22.04
     timeout-minutes: 10
+    outputs:
+      language: ${{ steps.load_config.outputs.language }}
 
     steps:
-      - name: Clone repo
+      - name: Clone Deployment Repo
         run: |
           git clone https://git:${{ secrets.GH_TOKEN }}@github.com/phu-ng/deployments.git
           cd deployments
-          echo abc > abc.txt
-          git config --global --add safe.directory $PWD
-          git config user.name "github-bot"
-          git config user.email "github-bot@users.noreply.github.com"
-          git add .
-          git commit -m "Update from GitHub Actions"
-          git push origin main
+#          echo abc > abc.txt
+#          git config --global --add safe.directory $PWD
+#          git config user.name "github-bot"
+#          git config user.email "github-bot@users.noreply.github.com"
+#          git add .
+#          git commit -m "Update from GitHub Actions"
+#          git push origin main
+      - name: Read application build detail
+        id: load_config
+        run: |
+          {
+            echo "YAML Config:"
+            while IFS="=" read -r key value; do
+              echo "  $key: $value"
+              echo "$key=$value" >> $GITHUB_OUTPUT
+            done < <(yq eval '. | to_entries | .[] | "\(.key)=\(.value)"' build_config.yaml)
+          }
 
-
-#  use_sha:
-#    needs: gather_information
-#    runs-on: ubuntu-22.04
-#    timeout-minutes: 10
-#    env:
-#      OUTPUT: ${{needs.gather_information.outputs.short_sha}}
-#    steps:
-#      - name: Print SHA from previous job
-#        run: echo "SHA is $OUTPUT"
+  use_sha:
+    needs: checkout_deployment_repo
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    env:
+      OUTPUT: ${{needs.checkout_deployment_repo.outputs.language}}
+    steps:
+      - name: Print SHA from previous job
+        run: echo "language is $OUTPUT"
