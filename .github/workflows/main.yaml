@@ -58,6 +58,8 @@ jobs:
       - name: Read application build detail
         id: load_config
         run: |
+          pwd
+          ls -lha
           {
             echo "YAML Config:"
             while IFS="=" read -r key value; do
