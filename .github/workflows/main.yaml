@@ -86,16 +86,12 @@ jobs:
             done < <(yq eval '. | to_entries | .[] | "\(.key)=\(.value)"' config.yaml)
           }
 
-  use_sha:
+  build_java:
     needs: gather_information
     runs-on: ubuntu-22.04
     timeout-minutes: 10
-    env:
-      OUTPUT: ${{needs.gather_information.outputs.language}}
-      OUTPUT1: ${{needs.gather_information.outputs.app_name}}
+    if: needs.gather_information.outputs.language == 'java'
 
     steps:
-      - name: Print SHA from previous job
-        run: echo "language is $OUTPUT"
-      - name: App name
-        run: echo "app name is $OUTPUT1"
+      - name: Running java
+        run: echo this is java
