@@ -46,9 +46,6 @@ jobs:
       - name: Clone Deployment Repo
         run: |
           git clone https://git:${{ secrets.GH_TOKEN }}@github.com/phu-ng/deployments.git
-          cd deployments
-          cd dev
-          cd ${{ github.event.repository.name }}
 #          echo abc > abc.txt
 #          git config --global --add safe.directory $PWD
 #          git config user.name "github-bot"
@@ -59,6 +56,9 @@ jobs:
       - name: Read application build detail
         id: load_config
         run: |
+          cd deployments
+          cd dev
+          cd ${{ github.event.repository.name }}
           pwd
           ls -lha
           {
