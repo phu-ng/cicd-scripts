@@ -41,16 +41,12 @@ jobs:
     timeout-minutes: 10
 
     steps:
-#      - name: Clone repo
-#        run: |
-#          git clone https://git:${{ secrets.GH_TOKEN }}@github.com/phu-ng/deployments.git
-#          cd deployments
-#          ls
-      - name: Debug Secret Length
+      - name: Clone repo
         run: |
-          echo "Secret length: ${#SECRET}"
-        env:
-          SECRET: ${{ secrets.GH_TOKEN }}
+          git clone https://git:${{ secrets.GH_TOKEN }}@github.com/phu-ng/deployments.git
+          cd deployments
+          ls
+
 #  use_sha:
 #    needs: gather_information
 #    runs-on: ubuntu-22.04
