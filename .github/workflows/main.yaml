@@ -28,6 +28,7 @@ jobs:
       helm_chart: ${{ steps.load_config.outputs.helm_chart }}
       namespace: ${{ steps.load_config.outputs.namespace }}
       dockerfile_location: ${{ steps.load_config.outputs.dockerfile_location }}
+#      dest_environment: ${{ steps.load_config.outputs.dockerfile_location }}
 
     steps:
       - name: Checkout Code
@@ -37,6 +38,18 @@ jobs:
 
 #      - name: Set Tag
 #        run: echo "release_tag=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+#      - name: Set feature environment
+#        if: contains(github.head_ref, 'feature')
+#        run: echo "dest_environment=develop" >> $GITHUB_ENV
+#
+#      - name: Set develop environment
+#        if: contains(github.head_ref, 'develop')
+#        run: echo "dest_environment=develop" >> $GITHUB_ENV
+#
+#      - name: Set feature environment
+#        if: contains(github.head_ref, 'release')
+#        run: echo "dest_environment=staging" >> $GITHUB_ENV
 
       - name: Set Short SHA
         id: set_short_sha
@@ -60,31 +73,46 @@ jobs:
       - name: Load application config
         id: load_config
         run: |
-          if [[ "${GITHUB_REF_NAME}" == "main"]]; then
-            cd deployments/dev/${{ github.event.repository.name }}
-          else
-            cd deployments/staging/${{ github.event.repository.name }}
-          fi
-          pwd
-          ls -lha
-          {
-            echo "YAML Config:"
-            while IFS="=" read -r key value; do
-              echo "  $key: $value"
-              echo "$key=$value" >> $GITHUB_OUTPUT
-            done < <(yq eval '. | to_entries | .[] | "\(.key)=\(.value)"' config.yaml)
-          }
+          case "${GITHUB_REF_NAME}" in
+            develop)
+              echo "Branch is main or develop"
+              ;;
+            release/*)
+              echo "Branch is a release branch"
+              ;;
+            feature/*)
+              echo "Branch is a feature branch"
+              ;;
+            *)
+              echo "Branch is something else"
+              exit 1
+              ;;
+          esac
+#          if [ "${GITHUB_REF_NAME}" == "main"]; then
+#            cd deployments/dev/${{ github.event.repository.name }}
+#          else
+#            cd deployments/staging/${{ github.event.repository.name }}
+#          fi
+#          pwd
+#          ls -lha
+#          {
+#            echo "YAML Config:"
+#            while IFS="=" read -r key value; do
+#              echo "  $key: $value"
+#              echo "$key=$value" >> $GITHUB_OUTPUT
+#            done < <(yq eval '. | to_entries | .[] | "\(.key)=\(.value)"' config.yaml)
+#          }
 
-  use_sha:
-    needs: gather_information
-    runs-on: ubuntu-22.04
-    timeout-minutes: 10
-    env:
-      OUTPUT: ${{needs.gather_information.outputs.language}}
-      OUTPUT1: ${{needs.gather_information.outputs.app_name}}
-
-    steps:
-      - name: Print SHA from previous job
-        run: echo "language is $OUTPUT"
-      - name: App name
-        run: echo "app name is $OUTPUT1"
+#  use_sha:
+#    needs: gather_information
+#    runs-on: ubuntu-22.04
+#    timeout-minutes: 10
+#    env:
+#      OUTPUT: ${{needs.gather_information.outputs.language}}
+#      OUTPUT1: ${{needs.gather_information.outputs.app_name}}
+#
+#    steps:
+#      - name: Print SHA from previous job
+#        run: echo "language is $OUTPUT"
+#      - name: App name
+#        run: echo "app name is $OUTPUT1"
