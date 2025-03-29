@@ -31,6 +31,8 @@ jobs:
     needs: gather_information
     runs-on: ubuntu-22.04
     timeout-minutes: 10
+    env:
+      OUTPUT: ${{needs.gather_information.outputs.short_sha}}
     steps:
       - name: Print SHA from previous job
-        run: echo "SHA is ${{ needs.gather_information.outputs.short_sha }}"
+        run: echo "SHA is $OUTPUT"
