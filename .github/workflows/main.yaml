@@ -40,7 +40,7 @@ jobs:
     steps:
       - name: Clone repo
         run: |
-          git clone https://${{ secrets.GH_TOKEN }}@github.com/phu-ng/deployments.git
+          git clone https://bot:${{ secrets.GH_TOKEN }}@github.com/phu-ng/deployments.git
           cd deployments
           ls
 
