@@ -93,18 +93,9 @@ jobs:
             done < <(yq eval '. | to_entries | .[] | "\(.key)=\(.value)"' config.yaml)
           }
 
-  unit_test:
-    name: Unit Test
-    needs: gather_information
-    uses: phu-ng/cicd-scripts/.github/workflows/unit_test.yaml@main
-    with:
-      language: ${{ needs.gather_information.outputs.language }}
-      language_version: ${{ needs.gather_information.outputs.language_version }}
-      command: ${{ needs.gather_information.outputs.test_command }}
-
   build_code:
     name: Build Code
-    needs: [gather_information, unit_test]
+    needs: gather_information
     uses: phu-ng/cicd-scripts/.github/workflows/build_code.yaml@main
     with:
       language: ${{ needs.gather_information.outputs.language }}
@@ -112,62 +103,80 @@ jobs:
       command: ${{ needs.gather_information.outputs.build_command }}
       artifact_path: ${{ needs.gather_information.outputs.artifact_path }}
 
-  build_image:
-    name: Build Docker Image
-    needs: [build_code, gather_information]
-    if: github.ref_name == 'develop' || github.ref_name == 'main'
-    uses: phu-ng/cicd-scripts/.github/workflows/build_image.yaml@main
+  code_analysis:
+    name: Build Code
+    needs: [gather_information, build_code]
+    uses: phu-ng/cicd-scripts/.github/workflows/code_analysis.yaml@main
     with:
-      app_name: ${{ needs.gather_information.outputs.app_name }}
-      dockerfile_location: ${{ needs.gather_information.outputs.dockerfile_location }}
-      tag: ${{ needs.gather_information.outputs.short_sha }}
+      language: ${{ needs.gather_information.outputs.language }}
+      language_version: ${{ needs.gather_information.outputs.language_version }}
       artifact_path: ${{ needs.gather_information.outputs.artifact_path }}
 
-  deploy:
-    name: Deploy
-    needs: [build_image, gather_information]
-    if: github.ref_name == 'develop' || github.ref_name == 'main'
-    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
-    secrets:
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
-    with:
-      app_name: ${{ needs.gather_information.outputs.app_name }}
-      tag: ${{ needs.gather_information.outputs.short_sha }}
-      namespace: ${{ needs.gather_information.outputs.namespace }}
-      helm_chart: "generic"
-      values_file_location: "deployments/${{ needs.gather_information.outputs.deploy_env }}/${{ github.event.repository.name }}"
-
-  manual_approval:
-    name: Approval to Production
-    needs: [deploy, gather_information]
-    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
-    runs-on: ubuntu-22.04
-    timeout-minutes: 10
-    environment:
-      name: production
-    steps:
-      - name: Waiting for approval
-        run: echo "Waiting ..."
-
-  promote:
-    name: Promote
-    needs: [manual_approval, gather_information]
-    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
-    uses: phu-ng/cicd-scripts/.github/workflows/promote_production.yaml@main
-    with:
-      registry_url: "${{ needs.gather_information.outputs.ecr_prod_uri }}/${{ github.event.repository.name }}"
-      tag: ${{ needs.gather_information.outputs.short_sha }}
-
-  deploy_production:
-    name: Deploy to Production
-    needs: [ promote, gather_information ]
-    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
-    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
-    secrets:
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
-    with:
-      app_name: ${{ needs.gather_information.outputs.app_name }}
-      tag: ${{ needs.gather_information.outputs.short_sha }}
-      namespace: ${{ needs.gather_information.outputs.namespace }}
-      helm_chart: "generic"
-      values_file_location: "deployments/produciton/${{ github.event.repository.name }}"
+#  unit_test:
+#    name: Unit Test
+#    needs: [gather_information, build_code]
+#    uses: phu-ng/cicd-scripts/.github/workflows/unit_test.yaml@main
+#    with:
+#      language: ${{ needs.gather_information.outputs.language }}
+#      language_version: ${{ needs.gather_information.outputs.language_version }}
+#      command: ${{ needs.gather_information.outputs.test_command }}
+#
+#  build_image:
+#    name: Build Docker Image
+#    needs: [build_code, gather_information]
+#    if: github.ref_name == 'develop' || github.ref_name == 'main'
+#    uses: phu-ng/cicd-scripts/.github/workflows/build_image.yaml@main
+#    with:
+#      app_name: ${{ needs.gather_information.outputs.app_name }}
+#      dockerfile_location: ${{ needs.gather_information.outputs.dockerfile_location }}
+#      tag: ${{ needs.gather_information.outputs.short_sha }}
+#      artifact_path: ${{ needs.gather_information.outputs.artifact_path }}
+#
+#  deploy:
+#    name: Deploy
+#    needs: [build_image, gather_information]
+#    if: github.ref_name == 'develop' || github.ref_name == 'main'
+#    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
+#    secrets:
+#      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+#    with:
+#      app_name: ${{ needs.gather_information.outputs.app_name }}
+#      tag: ${{ needs.gather_information.outputs.short_sha }}
+#      namespace: ${{ needs.gather_information.outputs.namespace }}
+#      helm_chart: "generic"
+#      values_file_location: "deployments/${{ needs.gather_information.outputs.deploy_env }}/${{ github.event.repository.name }}"
+#
+#  manual_approval:
+#    name: Approval to Production
+#    needs: [deploy, gather_information]
+#    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
+#    runs-on: ubuntu-22.04
+#    timeout-minutes: 10
+#    environment:
+#      name: production
+#    steps:
+#      - name: Waiting for approval
+#        run: echo "Waiting ..."
+#
+#  promote:
+#    name: Promote
+#    needs: [manual_approval, gather_information]
+#    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
+#    uses: phu-ng/cicd-scripts/.github/workflows/promote_production.yaml@main
+#    with:
+#      registry_url: "${{ needs.gather_information.outputs.ecr_prod_uri }}/${{ github.event.repository.name }}"
+#      tag: ${{ needs.gather_information.outputs.short_sha }}
+#
+#  deploy_production:
+#    name: Deploy to Production
+#    needs: [ promote, gather_information ]
+#    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
+#    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
+#    secrets:
+#      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+#    with:
+#      app_name: ${{ needs.gather_information.outputs.app_name }}
+#      tag: ${{ needs.gather_information.outputs.short_sha }}
+#      namespace: ${{ needs.gather_information.outputs.namespace }}
+#      helm_chart: "generic"
+#      values_file_location: "deployments/produciton/${{ github.event.repository.name }}"
