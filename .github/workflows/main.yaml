@@ -11,6 +11,10 @@ env:
   REGION: ap-southeast-1
   ECR_NON_PROD_URI: 817667413626.dkr.ecr.ap-southeast-1.amazonaws.com
   ECR_PROD_URI: 817667413626.dkr.ecr.ap-southeast-1.amazonaws.com
+  NON_PROD_CLUSTER_NAME: test
+  PROD_CLUSTER_NAME: test
+  NON_PROD_AWS_ACCOUNT_ID: 1234
+  PROD_AWS_ACCOUNT_ID: 1234
 
 jobs:
   gather_information:
@@ -31,8 +35,9 @@ jobs:
       dockerfile_location: ${{ steps.load_config.outputs.dockerfile_location }}
       deploy_env: ${{ steps.set_deploy_env.outputs.deploy_env }}
       artifact_path: ${{ steps.load_config.outputs.artifact_path }}
-      ecr_non_prod_uri: ${{ steps.set_ecr_uri.outputs.ecr_non_prod_uri }}
-      ecr_prod_uri: ${{ steps.set_ecr_uri.outputs.ecr_prod_uri }}
+      ecr_non_prod_uri: ${{ steps.set_env.outputs.ecr_non_prod_uri }}
+      non_prod_cluster_name: ${{ steps.set_env.outputs.non_prod_cluster_name }}
+      non_prod_aws_account_id: ${{ steps.set_env.outputs.non_prod_aws_account_id }}
 
     steps:
       - name: Checkout Code
@@ -49,11 +54,12 @@ jobs:
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Set ECR URI
-        id: set_ecr_uri
+      - name: Set env
+        id: set_env
         run: |
           echo "ecr_non_prod_uri=${{ env.ECR_NON_PROD_URI }}" >> $GITHUB_OUTPUT
-          echo "ecr_prod_uri=${{ env.ECR_PROD_URI }}" >> $GITHUB_OUTPUT
+          echo "non_prod_cluster_name=${{ env.NON_PROD_CLUSTER_NAME }}" >> $GITHUB_OUTPUT
+          echo "non_prod_aws_account_id=${{ env.NON_PROD_AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
 
       - name: Set Deploy env
         id: set_deploy_env
@@ -110,73 +116,129 @@ jobs:
     with:
       language: ${{ needs.gather_information.outputs.language }}
       language_version: ${{ needs.gather_information.outputs.language_version }}
+      command: ${{ needs.gather_information.outputs.build_command }}
+
+  unit_test:
+    name: Unit Test
+    needs: [gather_information, build_code]
+    uses: phu-ng/cicd-scripts/.github/workflows/unit_test.yaml@main
+    with:
+      language: ${{ needs.gather_information.outputs.language }}
+      language_version: ${{ needs.gather_information.outputs.language_version }}
+      command: ${{ needs.gather_information.outputs.test_command }}
+
+  build_image:
+    name: Build Docker Image
+    needs: [unit_test, gather_information]
+    if: github.ref_name == 'develop' || github.ref_name == 'main'
+    uses: phu-ng/cicd-scripts/.github/workflows/build_image.yaml@main
+    with:
+      app_name: ${{ needs.gather_information.outputs.app_name }}
+      dockerfile_location: ${{ needs.gather_information.outputs.dockerfile_location }}
+      tag: ${{ needs.gather_information.outputs.short_sha }}
       artifact_path: ${{ needs.gather_information.outputs.artifact_path }}
 
-#  unit_test:
-#    name: Unit Test
-#    needs: [gather_information, build_code]
-#    uses: phu-ng/cicd-scripts/.github/workflows/unit_test.yaml@main
-#    with:
-#      language: ${{ needs.gather_information.outputs.language }}
-#      language_version: ${{ needs.gather_information.outputs.language_version }}
-#      command: ${{ needs.gather_information.outputs.test_command }}
-#
-#  build_image:
-#    name: Build Docker Image
-#    needs: [build_code, gather_information]
-#    if: github.ref_name == 'develop' || github.ref_name == 'main'
-#    uses: phu-ng/cicd-scripts/.github/workflows/build_image.yaml@main
-#    with:
-#      app_name: ${{ needs.gather_information.outputs.app_name }}
-#      dockerfile_location: ${{ needs.gather_information.outputs.dockerfile_location }}
-#      tag: ${{ needs.gather_information.outputs.short_sha }}
-#      artifact_path: ${{ needs.gather_information.outputs.artifact_path }}
-#
-#  deploy:
-#    name: Deploy
-#    needs: [build_image, gather_information]
-#    if: github.ref_name == 'develop' || github.ref_name == 'main'
-#    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
-#    secrets:
-#      GH_TOKEN: ${{ secrets.GH_TOKEN }}
-#    with:
-#      app_name: ${{ needs.gather_information.outputs.app_name }}
-#      tag: ${{ needs.gather_information.outputs.short_sha }}
-#      namespace: ${{ needs.gather_information.outputs.namespace }}
-#      helm_chart: "generic"
-#      values_file_location: "deployments/${{ needs.gather_information.outputs.deploy_env }}/${{ github.event.repository.name }}"
-#
-#  manual_approval:
-#    name: Approval to Production
-#    needs: [deploy, gather_information]
-#    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
-#    runs-on: ubuntu-22.04
-#    timeout-minutes: 10
-#    environment:
-#      name: production
-#    steps:
-#      - name: Waiting for approval
-#        run: echo "Waiting ..."
-#
-#  promote:
-#    name: Promote
-#    needs: [manual_approval, gather_information]
-#    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
-#    uses: phu-ng/cicd-scripts/.github/workflows/promote_production.yaml@main
-#    with:
-#      registry_url: "${{ needs.gather_information.outputs.ecr_prod_uri }}/${{ github.event.repository.name }}"
-#      tag: ${{ needs.gather_information.outputs.short_sha }}
-#
-#  deploy_production:
-#    name: Deploy to Production
-#    needs: [ promote, gather_information ]
-#    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
-#    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
-#    secrets:
-#      GH_TOKEN: ${{ secrets.GH_TOKEN }}
-#    with:
-#      app_name: ${{ needs.gather_information.outputs.app_name }}
-#      tag: ${{ needs.gather_information.outputs.short_sha }}
-#      namespace: ${{ needs.gather_information.outputs.namespace }}
-#      helm_chart: "generic"
-#      values_file_location: "deployments/produciton/${{ github.event.repository.name }}"
+  deploy:
+    name: Deploy
+    needs: [build_image, gather_information]
+    if: github.ref_name == 'develop' || github.ref_name == 'main'
+    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    with:
+      app_name: ${{ needs.gather_information.outputs.app_name }}
+      tag: ${{ needs.gather_information.outputs.short_sha }}
+      cluster_name: ${{ needs.gather_information.outputs.non_prod_cluster_name }}
+      aws_account_id: ${{ needs.gather_information.outputs.non_prod_aws_account_id }}
+      helm_chart: "generic"
+      values_file_location: "deployments/${{ needs.gather_information.outputs.deploy_env }}/${{ github.event.repository.name }}"
+
+  manual_approval:
+    name: Approval to Production
+    needs: [deploy, gather_information]
+    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    environment:
+      name: production
+    steps:
+      - name: Waiting for approval
+        run: echo "Waiting ..."
+
+  gather_information_prod:
+    name: Gather Information from Prod
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    outputs:
+      short_sha: ${{ steps.set_short_sha.outputs.short_sha }}
+      app_name: ${{ steps.load_config.outputs.app_name }}
+      helm_chart: ${{ steps.load_config.outputs.helm_chart }}
+      namespace: ${{ steps.load_config.outputs.namespace }}
+      dockerfile_location: ${{ steps.load_config.outputs.dockerfile_location }}
+      ecr_prod_uri: ${{ steps.set_env.outputs.ecr_prod_uri }}
+      prod_cluster_name: ${{ steps.set_env.outputs.prod_cluster_name }}
+      prod_aws_account_id: ${{ steps.set_env.outputs.prod_aws_account_id }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      #      - name: Set Tag
+      #        run: echo "release_tag=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - name: Set Short SHA
+        id: set_short_sha
+        run: |
+          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Set env
+        id: set_env
+        run: |
+          echo "ecr_prod_uri=${{ env.ECR_PROD_URI }}" >> $GITHUB_OUTPUT
+          echo "prod_cluster_name=${{ env.PROD_CLUSTER_NAME }}" >> $GITHUB_OUTPUT
+          echo "prod_aws_account_id=${{ env.PROD_AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+
+      - name: Clone Deployment Repo
+        run: |
+          rm -rf deployments
+          git clone https://git:${{ secrets.GH_TOKEN }}@github.com/phu-ng/deployments.git
+
+      - name: Load application config
+        id: load_config
+        run: |
+          cd deployments/production/${{ github.event.repository.name }}
+          {
+            echo "YAML Config:"
+            while IFS="=" read -r key value; do
+              echo "  $key: $value"
+              echo "$key=$value" >> $GITHUB_OUTPUT
+            done < <(yq eval '. | to_entries | .[] | "\(.key)=\(.value)"' config.yaml)
+          }
+
+  promote:
+    name: Promote
+    needs: gather_information_prod
+    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
+    uses: phu-ng/cicd-scripts/.github/workflows/promote_production.yaml@main
+    with:
+      registry_url: "${{ needs.gather_information.outputs.ecr_prod_uri }}/${{ github.event.repository.name }}"
+      tag: ${{ needs.gather_information_prod.outputs.short_sha }}
+
+  deploy_production:
+    name: Deploy to Production
+    needs: [ promote, gather_information_prod ]
+    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
+    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    with:
+      app_name: ${{ needs.gather_information_prod.outputs.app_name }}
+      tag: ${{ needs.gather_information_prod.outputs.short_sha }}
+      namespace: ${{ needs.gather_information_prod.outputs.namespace }}
+      cluster_name: ${{ needs.gather_information_prod.outputs.prod_cluster_name }}
+      aws_account_id: ${{ needs.gather_information_prod.outputs.prod_aws_account_id }}
+      helm_chart: "generic"
+      values_file_location: "deployments/produciton/${{ github.event.repository.name }}"

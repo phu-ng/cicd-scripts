@@ -9,7 +9,10 @@ on:
       app_name:
         type: string
         required: true
-      namespace:
+      cluster_name:
+        type: string
+        required: true
+      aws_account_id:
         type: string
         required: true
       helm_chart:
