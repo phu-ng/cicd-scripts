@@ -145,7 +145,7 @@ jobs:
     name: Promote
     needs: [manual_approval, gather_information]
     if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
-    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
+    uses: phu-ng/cicd-scripts/.github/workflows/promote_production.yaml@main
     with:
       registry_url: "test/${{ github.event.repository.name }}"
       tag: ${{ needs.gather_information.outputs.short_sha }}
