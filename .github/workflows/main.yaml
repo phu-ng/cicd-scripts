@@ -143,30 +143,39 @@ jobs:
           echo "Success count: $SUCCESS_COUNT"
           echo "success_count=$SUCCESS_COUNT" >> $GITHUB_OUTPUT
 
-  build_image:
-    name: Build Docker Image
+  validate:
+    name: validate
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
     needs: [check_success_count, gather_information]
-    if: needs.check_success_count.outputs.success_count >= 2
-    uses: phu-ng/cicd-scripts/.github/workflows/build_image.yaml@main
-    with:
-      app_name: ${{ needs.gather_information.outputs.app_name }}
-      dockerfile_location: ${{ needs.gather_information.outputs.build_command }}
-      tag: ${{ needs.gather_information.outputs.short_sha }}
-      artifact_path: ${{ needs.gather_information.outputs.artifact_path }}
+    steps:
+      - name: count
+        run: echo "${{ needs.check_success_count.outputs.success_count }}"
 
-  deploy_dev:
-    name: Deploy to Dev
-    needs: [build_image, gather_information]
-    if: github.ref_name == 'develop' || github.ref_name == 'main'
-    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
-    secrets:
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
-    with:
-      app_name: ${{ needs.gather_information.outputs.app_name }}
-      tag: ${{ needs.gather_information.outputs.short_sha }}
-      namespace: ${{ needs.gather_information.outputs.namespace }}
-      helm_chart: "generic"
-      values_file_location: "deployments/${{ needs.gather_information.outputs.deploy_env }}/${{ github.event.repository.name }}"
+#  build_image:
+#    name: Build Docker Image
+#    needs: [check_success_count, gather_information]
+#    if: needs.check_success_count.outputs.success_count >= 2
+#    uses: phu-ng/cicd-scripts/.github/workflows/build_image.yaml@main
+#    with:
+#      app_name: ${{ needs.gather_information.outputs.app_name }}
+#      dockerfile_location: ${{ needs.gather_information.outputs.build_command }}
+#      tag: ${{ needs.gather_information.outputs.short_sha }}
+#      artifact_path: ${{ needs.gather_information.outputs.artifact_path }}
+#
+#  deploy_dev:
+#    name: Deploy to Dev
+#    needs: [build_image, gather_information]
+#    if: github.ref_name == 'develop' || github.ref_name == 'main'
+#    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
+#    secrets:
+#      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+#    with:
+#      app_name: ${{ needs.gather_information.outputs.app_name }}
+#      tag: ${{ needs.gather_information.outputs.short_sha }}
+#      namespace: ${{ needs.gather_information.outputs.namespace }}
+#      helm_chart: "generic"
+#      values_file_location: "deployments/${{ needs.gather_information.outputs.deploy_env }}/${{ github.event.repository.name }}"
 
 #  deploy_staging:
 #    name: Deploy to Staging
