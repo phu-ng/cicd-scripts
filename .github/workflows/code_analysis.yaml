@@ -12,6 +12,9 @@ on:
       language_flavour:
         type: string
         default: temurin
+      artifact_path:
+        type: string
+        required: true
 
 jobs:
   code_analysis_java:
