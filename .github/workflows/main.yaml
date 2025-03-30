@@ -10,6 +10,7 @@ env:
   RUNNER_NON_PROD_ROLE_ARN: arn:aws:iam::817667413626:role/GitHubRunner
   REGION: ap-southeast-1
   ECR_NON_PROD_URI: 817667413626.dkr.ecr.ap-southeast-1.amazonaws.com
+  ECR_PROD_URI: 817667413626.dkr.ecr.ap-southeast-1.amazonaws.com
 
 jobs:
   gather_information:
@@ -30,6 +31,8 @@ jobs:
       dockerfile_location: ${{ steps.load_config.outputs.dockerfile_location }}
       deploy_env: ${{ steps.set_deploy_env.outputs.deploy_env }}
       artifact_path: ${{ steps.load_config.outputs.artifact_path }}
+      ecr_non_prod_uri: ${{ steps.set_ecr_uri.outputs.ecr_non_prod_uri }}
+      ecr_prod_uri: ${{ steps.set_ecr_uri.outputs.ecr_prod_uri }}
 
     steps:
       - name: Checkout Code
@@ -45,7 +48,12 @@ jobs:
         run: |
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-          echo "${{ env.ECR_NON_PROD_URI }}"
+
+      - name: Set ECR URI
+        id: set_ecr_uri
+        run: |
+          echo "ecr_non_prod_uri=${{ env.ECR_NON_PROD_URI }}" >> $GITHUB_OUTPUT
+          echo "ecr_prod_uri=${{ env.ECR_PROD_URI }}" >> $GITHUB_OUTPUT
 
       - name: Set Deploy env
         id: set_deploy_env
@@ -147,19 +155,19 @@ jobs:
     if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
     uses: phu-ng/cicd-scripts/.github/workflows/promote_production.yaml@main
     with:
-      registry_url: "test/${{ github.event.repository.name }}"
+      registry_url: "${{ needs.gather_information.outputs.ecr_prod_uri }}/${{ github.event.repository.name }}"
       tag: ${{ needs.gather_information.outputs.short_sha }}
 
-#  deploy_staging:
-#    name: Deploy to Staging
-#    needs: [ build_image, gather_information ]
-#    if: startsWith(github.ref_name, 'release/')
-#    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
-#    secrets:
-#      GH_TOKEN: ${{ secrets.GH_TOKEN }}
-#    with:
-#      app_name: ${{ needs.gather_information.outputs.app_name }}
-#      tag: ${{ needs.gather_information.outputs.short_sha }}
-#      namespace: ${{ needs.gather_information.outputs.namespace }}
-#      helm_chart: "generic"
-#      values_file_location: "deployments/dev/ad"
+  deploy_production:
+    name: Deploy to Production
+    needs: [ promote, gather_information ]
+    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
+    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    with:
+      app_name: ${{ needs.gather_information.outputs.app_name }}
+      tag: ${{ needs.gather_information.outputs.short_sha }}
+      namespace: ${{ needs.gather_information.outputs.namespace }}
+      helm_chart: "generic"
+      values_file_location: "deployments/produciton/${{ github.event.repository.name }}"
