@@ -3,21 +3,24 @@ name: Deploy App
 on:
   workflow_call:
     inputs:
-      imageTag:
+      tag:
         type: string
         default: "dev"
-      appName:
+      app_name:
         type: string
         required: true
       namespace:
         type: string
         required: true
-      helmChart:
+      helm_chart:
         type: string
         default: "generic"
-      helmVersion:
+      values_file_location:
         type: string
-        default: "0.1.0"
+        required: true
+    secrets:
+      GH_TOKEN:
+        required: true
 
 jobs:
   deploy:
@@ -25,8 +28,17 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Pull helm chart from ECR
-        run: echo helm pull from ECR
+      - name: Clone Deployment Repo
+        run: |
+          rm -rf deployments
+          git clone https://git:${{ secrets.GH_TOKEN }}@github.com/phu-ng/deployments.git
+      #          echo abc > abc.txt
+      #          git config --global --add safe.directory $PWD
+      #          git config user.name "github-bot"
+      #          git config user.email "github-bot@users.noreply.github.com"
+      #          git add .
+      #          git commit -m "Update from GitHub Actions"
+      #          git push origin main
 
       - name: Deploy with new value or image tag
-        run: echo helm upgrade --install "${{ inputs.appName }}" -f ./deployments/dev/values.yaml --set image.tag="${{ inputs.imageTag }}" --version "${{ inputs.helmVersion }}" --namespace "${{ inputs.namespace }}"
+        run: echo helm upgrade --install "${{ inputs.app_name }}" -f "${{ inputs.values_file_location }}" --set image.tag="${{ inputs.tag }}" --namespace "${{ inputs.namespace }}"

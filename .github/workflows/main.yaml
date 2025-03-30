@@ -129,8 +129,23 @@ jobs:
   build_image:
     name: Build Docker Image
     needs: [build_java, gather_information]
+    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'develop'
     uses: phu-ng/cicd-scripts/.github/workflows/build_image.yaml@main
     with:
       app_name: ${{ needs.gather_information.outputs.app_name }}
       dockerfile_location: ${{ needs.gather_information.outputs.build_command }}
       tag: ${{ needs.gather_information.outputs.short_sha }}
+
+#  deploy:
+#    name: Deploy to Dev
+#    needs: [ build_java, gather_information ]
+#    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'develop'
+#    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
+#    secrets:
+#      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+#    with:
+#      app_name: ${{ needs.gather_information.outputs.app_name }}
+#      tag: ${{ needs.gather_information.outputs.short_sha }}
+#      namespace: ${{ needs.gather_information.outputs.namespace }}
+#      helm_chart: "generic"
+#      values_file_location: "deployments/dev/ad"
