@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Clone Deployment Repo
+      - name: Update Deployment Repo
         run: |
           rm -rf deployments
           git clone https://git:${{ secrets.GH_TOKEN }}@github.com/phu-ng/deployments.git
@@ -42,4 +42,7 @@ jobs:
           git push origin main
 
       - name: Deploy with new value or image tag
-        run: echo helm upgrade --install "${{ inputs.app_name }}" -f "${{ inputs.values_file_location }}" --set image.tag="${{ inputs.tag }}" --namespace "${{ inputs.namespace }}"
+        run: |
+          pwd
+          ls -lha
+          echo helm upgrade --install "${{ inputs.app_name }}" ./deployments/charts/generic -f "${{ inputs.values_file_location }}"
