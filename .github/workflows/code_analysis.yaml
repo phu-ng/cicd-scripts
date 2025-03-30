@@ -15,6 +15,9 @@ on:
       command:
         type: string
         required: true
+      enable:
+        type: string
+        default: true
 
 jobs:
   code_analysis_java:
@@ -29,6 +32,7 @@ jobs:
           fetch-depth: 1
 
       - name: Set up JDK
+        if: inputs.enable == true
         uses: actions/setup-java@v4
         with:
           java-version: ${{ inputs.language_version }}
@@ -36,20 +40,24 @@ jobs:
           cache: 'maven'
 
       - name: Cache local Maven repository
+        if: inputs.enable == true
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ hashFiles('**/pom.xml') }}
 
       - name: Initialize CodeQL
+        if: inputs.enable == true
         uses: github/codeql-action/init@v3
         with:
           languages: java
 
       - name: Compile Code
+        if: inputs.enable == true
         run: ${{ inputs.command }}
 
       - name: Perform CodeQL Analysis
+        if: inputs.enable == true
         uses: github/codeql-action/analyze@v3
 
   code_analysis_nodejs:
@@ -64,25 +72,24 @@ jobs:
           fetch-depth: 1
 
       - uses: actions/setup-node@v4
+        if: inputs.enable == true
         with:
           node-version: ${{ inputs.language_version }}
           cache: 'npm'
 
       - name: Cache local npm repository
+        if: inputs.enable == true
         uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ hashFiles('**/package-lock.json') }}
 
-      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
-        name: List the state of node modules
-        continue-on-error: true
-        run: npm list
-
       - name: Initialize CodeQL
+        if: inputs.enable == true
         uses: github/codeql-action/init@v3
         with:
           languages: javascript
 
       - name: Perform CodeQL Analysis
+        if: inputs.enable == true
         uses: github/codeql-action/analyze@v3

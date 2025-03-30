@@ -15,6 +15,9 @@ on:
       command:
         type: string
         default: './mvnw compile'
+      enable:
+        type: string
+        default: true
 
 jobs:
   unit_test_java:
@@ -29,6 +32,7 @@ jobs:
           fetch-depth: 1
 
       - name: Set up JDK
+        if: inputs.enable == true
         uses: actions/setup-java@v4
         with:
           java-version: ${{ inputs.language_version }}
@@ -36,12 +40,14 @@ jobs:
           cache: 'maven'
 
       - name: Cache local Maven repository
+        if: inputs.enable == true
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ hashFiles('**/pom.xml') }}
 
       - name: Run test
+        if: inputs.enable == true
         run: ${{ inputs.command }}
 
   test_node:
@@ -56,20 +62,18 @@ jobs:
           fetch-depth: 1
 
       - uses: actions/setup-node@v4
+        if: inputs.enable == true
         with:
           node-version: ${{ inputs.node_version }}
           cache: 'npm'
 
       - name: Cache local npm repository
+        if: inputs.enable == true
         uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ hashFiles('**/package-lock.json') }}
 
-      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
-        name: List the state of node modules
-        continue-on-error: true
-        run: npm list
-
       - name: Test
+        if: inputs.enable == true
         run: ${{ inputs.command }}

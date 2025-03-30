@@ -117,6 +117,7 @@ jobs:
       language: ${{ needs.gather_information.outputs.language }}
       language_version: ${{ needs.gather_information.outputs.language_version }}
       command: ${{ needs.gather_information.outputs.build_command }}
+      enable: ${{ needs.gather_information.outputs.codeql_enabled }}
 
   unit_test:
     name: Unit Test
@@ -126,6 +127,7 @@ jobs:
       language: ${{ needs.gather_information.outputs.language }}
       language_version: ${{ needs.gather_information.outputs.language_version }}
       command: ${{ needs.gather_information.outputs.test_command }}
+      enable: ${{ needs.gather_information.outputs.unit_test_enabled }}
 
   build_image:
     name: Build Docker Image
