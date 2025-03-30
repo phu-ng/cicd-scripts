@@ -1,7 +1,7 @@
-name: Compile Java
+name: Unit Test
 
 on:
-  workflow_call:
+  workflow_call: # Allows this workflow to be called from other repositories
     inputs:
       language:
         type: string
@@ -15,13 +15,10 @@ on:
       command:
         type: string
         default: './mvnw compile'
-      artifact_path:
-        type: string
-        default: 'target'
 
 jobs:
-  compile_java:
-    name: Compile Java
+  unit_test_java:
+    name: Unit Test Java
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     if: inputs.language == 'java'
@@ -44,18 +41,11 @@ jobs:
           path: ~/.m2/repository
           key: ${{ hashFiles('**/pom.xml') }}
 
-      - name: Compile Code
+      - name: Run test
         run: ${{ inputs.command }}
 
-      - name: Store artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build
-          path: "${{ inputs.artifact_path }}/*.jar"
-          retention-days: 1
-
-  build_node:
-    name: Build Node
+  test_node:
+    name: Test Node
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     if: inputs.language == 'nodejs'
@@ -67,7 +57,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ inputs.language_version }}
+          node-version: ${{ inputs.node_version }}
           cache: 'npm'
 
       - name: Cache local npm repository
@@ -81,13 +71,5 @@ jobs:
         continue-on-error: true
         run: npm list
 
-      - name: Build
+      - name: Test
         run: ${{ inputs.command }}
-
-#      - name: Store artifacts
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: dist-without-markdown
-#          path: |
-#            dist
-#            !dist/**/*.md

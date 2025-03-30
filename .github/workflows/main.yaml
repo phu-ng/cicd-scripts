@@ -80,104 +80,49 @@ jobs:
             done < <(yq eval '. | to_entries | .[] | "\(.key)=\(.value)"' config.yaml)
           }
 
-  build_code:
-    name: Build Code
+  unit_test:
+    name: Unit Test
     needs: gather_information
-    uses: phu-ng/cicd-scripts/.github/workflows/build_code.yaml@main
+    uses: phu-ng/cicd-scripts/.github/workflows/unit_test.yaml@main
     with:
       language: ${{ needs.gather_information.outputs.language }}
       language_version: ${{ needs.gather_information.outputs.language_version }}
       command: ${{ needs.gather_information.outputs.test_command }}
 
-#  unit_test_java:
-#    name: Test Java
-#    needs: gather_information
-#    if: needs.gather_information.outputs.language == 'java'
-#    uses: phu-ng/cicd-scripts/.github/workflows/unit_test_java.yaml@main
-#    with:
-#      java_version: ${{ needs.gather_information.outputs.language_version }}
-#      command: ${{ needs.gather_information.outputs.test_command }}
-#
-#  build_java:
-#    name: Build Java
-#    needs: [unit_test_java, gather_information]
-#    if: needs.gather_information.outputs.language == 'java'
-#    uses: phu-ng/cicd-scripts/.github/workflows/build_java.yaml@main
-#    with:
-#      java_version: ${{ needs.gather_information.outputs.language_version }}
-#      command: ${{ needs.gather_information.outputs.build_command }}
-#
-#  unit_test_nodejs:
-#    name: Test Nodejs
-#    needs: gather_information
-#    if: needs.gather_information.outputs.language == 'nodejs'
-#    uses: phu-ng/cicd-scripts/.github/workflows/unit_test_nodejs.yaml@main
-#    with:
-#      node_version: ${{ needs.gather_information.outputs.language_version }}
-#      command: ${{ needs.gather_information.outputs.test_command }}
-#
-#  build_nodejs:
-#    name: Build Nodejs
-#    needs: [unit_test_nodejs, gather_information]
-#    if: needs.gather_information.outputs.language == 'nodejs'
-#    uses: phu-ng/cicd-scripts/.github/workflows/build_nodejs.yaml@main
-#    with:
-#      node_version: ${{ needs.gather_information.outputs.language_version }}
-#      command: ${{ needs.gather_information.outputs.build_command }}
-#
-#  check_success_count:
-#    name: Validate jobs result
-#    runs-on: ubuntu-22.04
-#    timeout-minutes: 10
-#    needs: [build_java, build_nodejs, gather_information]
-#    if: always() && (startsWith(github.ref_name, 'release/') || github.ref_name == 'develop' || github.ref_name == 'main')
-#    outputs:
-#      success_count: ${{ steps.count.outputs.success_count }}
-#    steps:
-#      - name: Count successful jobs
-#        id: count
-#        run: |
-#          SUCCESS_COUNT=0
-#          [[ "${{ needs.build_java.result }}" == "success" ]] && SUCCESS_COUNT=$((SUCCESS_COUNT+1))
-#          [[ "${{ needs.build_nodejs.result }}" == "success" ]] && SUCCESS_COUNT=$((SUCCESS_COUNT+1))
-#          [[ "${{ needs.gather_information.result }}" == "success" ]] && SUCCESS_COUNT=$((SUCCESS_COUNT+1))
-#
-#          echo "Success count: $SUCCESS_COUNT"
-#          echo "success_count=$SUCCESS_COUNT" >> $GITHUB_OUTPUT
-#
-  validate:
-    name: validate
-    runs-on: ubuntu-22.04
-    timeout-minutes: 10
-    needs: [build_code, gather_information]
-    steps:
-      - name: count
-        run: echo abc
+  build_code:
+    name: Build Code
+    needs: [gather_information, unit_test]
+    uses: phu-ng/cicd-scripts/.github/workflows/build_code.yaml@main
+    with:
+      language: ${{ needs.gather_information.outputs.language }}
+      language_version: ${{ needs.gather_information.outputs.language_version }}
+      command: ${{ needs.gather_information.outputs.build_command }}
+      artifact_path: ${{ needs.gather_information.outputs.artifact_path }}
 
-#  build_image:
-#    name: Build Docker Image
-#    needs: [check_success_count, gather_information]
-#    if: needs.check_success_count.outputs.success_count >= 2
-#    uses: phu-ng/cicd-scripts/.github/workflows/build_image.yaml@main
-#    with:
-#      app_name: ${{ needs.gather_information.outputs.app_name }}
-#      dockerfile_location: ${{ needs.gather_information.outputs.build_command }}
-#      tag: ${{ needs.gather_information.outputs.short_sha }}
-#      artifact_path: ${{ needs.gather_information.outputs.artifact_path }}
-#
-#  deploy_dev:
-#    name: Deploy to Dev
-#    needs: [build_image, gather_information]
-#    if: github.ref_name == 'develop' || github.ref_name == 'main'
-#    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
-#    secrets:
-#      GH_TOKEN: ${{ secrets.GH_TOKEN }}
-#    with:
-#      app_name: ${{ needs.gather_information.outputs.app_name }}
-#      tag: ${{ needs.gather_information.outputs.short_sha }}
-#      namespace: ${{ needs.gather_information.outputs.namespace }}
-#      helm_chart: "generic"
-#      values_file_location: "deployments/${{ needs.gather_information.outputs.deploy_env }}/${{ github.event.repository.name }}"
+  build_image:
+    name: Build Docker Image
+    needs: [build_code, gather_information]
+    if: github.ref_name == 'develop' || github.ref_name == 'main'
+    uses: phu-ng/cicd-scripts/.github/workflows/build_image.yaml@main
+    with:
+      app_name: ${{ needs.gather_information.outputs.app_name }}
+      dockerfile_location: ${{ needs.gather_information.outputs.build_command }}
+      tag: ${{ needs.gather_information.outputs.short_sha }}
+      artifact_path: ${{ needs.gather_information.outputs.artifact_path }}
+
+  deploy:
+    name: Deploy
+    needs: [build_image, gather_information]
+    if: github.ref_name == 'develop' || github.ref_name == 'main'
+    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    with:
+      app_name: ${{ needs.gather_information.outputs.app_name }}
+      tag: ${{ needs.gather_information.outputs.short_sha }}
+      namespace: ${{ needs.gather_information.outputs.namespace }}
+      helm_chart: "generic"
+      values_file_location: "deployments/${{ needs.gather_information.outputs.deploy_env }}/${{ github.event.repository.name }}"
 
 #  deploy_staging:
 #    name: Deploy to Staging
