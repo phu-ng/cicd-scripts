@@ -33,6 +33,7 @@ jobs:
           rm -rf deployments
           git clone https://git:${{ secrets.GH_TOKEN }}@github.com/phu-ng/deployments.git
           yq -i '.image.tag = "${{ inputs.tag }}"' "${{ inputs.values_file_location }}/values.yaml"
+          cd deployments
           git config --global --add safe.directory $PWD
           git config user.name "github-bot"
           git config user.email "github-bot@users.noreply.github.com"
