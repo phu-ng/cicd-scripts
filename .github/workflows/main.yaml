@@ -132,7 +132,7 @@ jobs:
   build_image:
     name: Build Docker Image
     needs: [code_analysis, unit_test, gather_information]
-    if: github.ref_name == 'develop' || github.ref_name == 'main'
+    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'develop'
     uses: phu-ng/cicd-scripts/.github/workflows/build_image.yaml@main
     with:
       app_name: ${{ needs.gather_information.outputs.app_name }}
@@ -143,7 +143,7 @@ jobs:
   deploy:
     name: Deploy
     needs: [build_image, gather_information]
-    if: github.ref_name == 'develop' || github.ref_name == 'main'
+    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'develop'
     uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
     secrets:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -159,7 +159,7 @@ jobs:
   manual_approval:
     name: Approval to Production
     needs: [deploy, gather_information]
-    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
+    if: startsWith(github.ref_name, 'release/')
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     environment:
@@ -171,7 +171,7 @@ jobs:
   gather_information_prod:
     name: Gather Information from Prod
     needs: manual_approval
-    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
+    if: startsWith(github.ref_name, 'release/')
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     outputs:
@@ -226,7 +226,7 @@ jobs:
   promote:
     name: Promote
     needs: gather_information_prod
-    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
+    if: startsWith(github.ref_name, 'release/')
     uses: phu-ng/cicd-scripts/.github/workflows/promote_production.yaml@main
     with:
       registry_url: "${{ needs.gather_information.outputs.ecr_prod_uri }}/${{ github.event.repository.name }}"
@@ -235,7 +235,7 @@ jobs:
   deploy_production:
     name: Deploy to Production
     needs: [ promote, gather_information_prod ]
-    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
+    if: startsWith(github.ref_name, 'release/')
     uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
     secrets:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
