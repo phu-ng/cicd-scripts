@@ -129,7 +129,7 @@ jobs:
 
   build_image:
     name: Build Docker Image
-    needs: [unit_test, gather_information]
+    needs: [code_analysis, unit_test, gather_information]
     if: github.ref_name == 'develop' || github.ref_name == 'main'
     uses: phu-ng/cicd-scripts/.github/workflows/build_image.yaml@main
     with:
@@ -148,6 +148,7 @@ jobs:
     with:
       app_name: ${{ needs.gather_information.outputs.app_name }}
       tag: ${{ needs.gather_information.outputs.short_sha }}
+      namespace: ${{ needs.gather_information.outputs.namespace }}
       cluster_name: ${{ needs.gather_information.outputs.non_prod_cluster_name }}
       aws_account_id: ${{ needs.gather_information.outputs.non_prod_aws_account_id }}
       helm_chart: "generic"
