@@ -122,10 +122,31 @@ jobs:
       node_version: ${{ needs.gather_information.outputs.language_version }}
       command: ${{ needs.gather_information.outputs.build_command }}
 
+  check_success_count:
+    name: Validate jobs result
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    needs: [build_java, build_nodejs, gather_information]
+    if: always() && (startsWith(github.ref_name, 'release/') || github.ref_name == 'develop' || github.ref_name == 'main')
+    outputs:
+      success_count: ${{ steps.count.outputs.success_count }}
+    steps:
+      - name: Count successful jobs
+        id: count
+        run: |
+          SUCCESS_COUNT=0
+          [[ "${{ needs.build_java.result }}" == "success" ]] && SUCCESS_COUNT=$((SUCCESS_COUNT+1))
+          [[ "${{ needs.build_nodejs.result }}" == "success" ]] && SUCCESS_COUNT=$((SUCCESS_COUNT+1))
+          [[ "${{ needs.gather_information.result }}" == "success" ]] && SUCCESS_COUNT=$((SUCCESS_COUNT+1))
+
+          echo "Success count: $SUCCESS_COUNT"
+          echo "success_count=$SUCCESS_COUNT" >> $GITHUB_OUTPUT
+
   build_image:
     name: Build Docker Image
-    needs: [build_java, build_nodejs, gather_information]
-    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'develop' || github.ref_name == 'main'
+    needs: [check_success_count]
+    if: needs.check_success_count.outputs.success_count >= 2 &&
+      (startsWith(github.ref_name, 'release/') || github.ref_name == 'develop' || github.ref_name == 'main')
     uses: phu-ng/cicd-scripts/.github/workflows/build_image.yaml@main
     with:
       app_name: ${{ needs.gather_information.outputs.app_name }}
