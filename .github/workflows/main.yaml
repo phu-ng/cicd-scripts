@@ -24,6 +24,7 @@ jobs:
       namespace: ${{ steps.load_config.outputs.namespace }}
       dockerfile_location: ${{ steps.load_config.outputs.dockerfile_location }}
       deploy_env: ${{ steps.set_deploy_env.outputs.deploy_env }}
+      artifact_path: ${{ steps.load_config.outputs.artifact_path }}
 
     steps:
       - name: Checkout Code
@@ -144,14 +145,14 @@ jobs:
 
   build_image:
     name: Build Docker Image
-    needs: [check_success_count]
-    if: needs.check_success_count.outputs.success_count >= 2 &&
-      (startsWith(github.ref_name, 'release/') || github.ref_name == 'develop' || github.ref_name == 'main')
+    needs: [check_success_count, gather_information]
+    if: needs.check_success_count.outputs.success_count >= 2
     uses: phu-ng/cicd-scripts/.github/workflows/build_image.yaml@main
     with:
       app_name: ${{ needs.gather_information.outputs.app_name }}
       dockerfile_location: ${{ needs.gather_information.outputs.build_command }}
       tag: ${{ needs.gather_information.outputs.short_sha }}
+      artifact_path: ${{ needs.gather_information.outputs.artifact_path }}
 
   deploy_dev:
     name: Deploy to Dev
