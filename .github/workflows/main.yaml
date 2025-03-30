@@ -45,7 +45,7 @@ jobs:
         run: |
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-          echo "${{ github.event.repository.name }}"
+          echo "${{ env.ECR_NON_PROD_URI }}"
 
       - name: Set Deploy env
         id: set_deploy_env
@@ -147,7 +147,7 @@ jobs:
     if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
     uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
     with:
-      registry_url: "${{ env.ECR_NON_PROD_URI }}/${{ github.event.repository.name }}"
+      registry_url: "test/${{ github.event.repository.name }}"
       tag: ${{ needs.gather_information.outputs.short_sha }}
 
 #  deploy_staging:
