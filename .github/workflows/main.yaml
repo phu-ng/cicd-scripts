@@ -246,4 +246,4 @@ jobs:
       cluster_name: ${{ needs.gather_information_prod.outputs.prod_cluster_name }}
       aws_account_id: ${{ needs.gather_information_prod.outputs.prod_aws_account_id }}
       helm_chart: "generic"
-      values_file_location: "deployments/produciton/${{ github.event.repository.name }}"
+      values_file_location: "deployments/production/${{ github.event.repository.name }}"
