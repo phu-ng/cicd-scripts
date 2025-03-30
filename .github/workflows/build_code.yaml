@@ -55,6 +55,7 @@ jobs:
     name: Build Node
     runs-on: ubuntu-22.04
     timeout-minutes: 10
+    if: inputs.language == 'nodejs'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
