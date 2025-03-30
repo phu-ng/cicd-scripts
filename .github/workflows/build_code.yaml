@@ -1,0 +1,89 @@
+name: Compile Java
+
+on:
+  workflow_call:
+    inputs:
+      language:
+        type: string
+        default: java
+      language_version:
+        type: string
+        default: 17
+      language_flavour:
+        type: string
+        default: temurin
+      command:
+        type: string
+        default: './mvnw compile'
+
+jobs:
+  compile_java:
+    name: Compile Java
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    if: inputs.language == 'java'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.language_version }}
+          distribution: ${{ inputs.language_flavour }}
+          cache: 'maven'
+
+      - name: Cache local Maven repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ hashFiles('**/pom.xml') }}
+
+      - name: Compile Code
+        run: ${{ inputs.command }}
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: target/*.jar
+          retention-days: 1
+
+  build_node:
+    name: Build Node
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.language_version }}
+          cache: 'npm'
+
+      - name: Cache local npm repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ hashFiles('**/package-lock.json') }}
+
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: List the state of node modules
+        continue-on-error: true
+        run: npm list
+
+      - name: Build
+        run: ${{ inputs.command }}
+
+#      - name: Store artifacts
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: dist-without-markdown
+#          path: |
+#            dist
+#            !dist/**/*.md

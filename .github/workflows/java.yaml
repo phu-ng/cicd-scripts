@@ -1,0 +1,135 @@
+name: Java Maven Build
+
+on:
+  workflow_call:
+    secrets:
+      GH_TOKEN:
+        required: true
+
+jobs:
+  gather_information:
+    name: Gather Information
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    outputs:
+      short_sha: ${{ steps.set_short_sha.outputs.short_sha }}
+      language: ${{ steps.load_config.outputs.language }}
+      app_name: ${{ steps.load_config.outputs.app_name }}
+      language_version: ${{ steps.load_config.outputs.language_version }}
+      build_command: ${{ steps.load_config.outputs.build_command }}
+      test_command: ${{ steps.load_config.outputs.test_command }}
+      unit_test_enabled: ${{ steps.load_config.outputs.unit_test_enabled }}
+      codeql_enabled: ${{ steps.load_config.outputs.codeql_enabled }}
+      helm_chart: ${{ steps.load_config.outputs.helm_chart }}
+      namespace: ${{ steps.load_config.outputs.namespace }}
+      dockerfile_location: ${{ steps.load_config.outputs.dockerfile_location }}
+      deploy_env: ${{ steps.set_deploy_env.outputs.deploy_env }}
+      artifact_path: ${{ steps.load_config.outputs.artifact_path }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      #      - name: Set Tag
+      #        run: echo "release_tag=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - name: Set Short SHA
+        id: set_short_sha
+        run: |
+          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "${{ github.event.repository.name }}"
+
+      - name: Set Deploy env
+        id: set_deploy_env
+        run: |
+          case "${GITHUB_REF_NAME}" in
+            release/*)
+              echo "deploy_env=staging" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "deploy_env=dev" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - name: Clone Deployment Repo
+        run: |
+          rm -rf deployments
+          git clone https://git:${{ secrets.GH_TOKEN }}@github.com/phu-ng/deployments.git
+
+      - name: Load application config
+        id: load_config
+        run: |
+          case "${GITHUB_REF_NAME}" in
+            release/*)
+              cd deployments/staging/${{ github.event.repository.name }}
+              ;;
+            *)
+              cd deployments/dev/${{ github.event.repository.name }}
+              ;;
+          esac
+          pwd
+          ls -lha
+          {
+            echo "YAML Config:"
+            while IFS="=" read -r key value; do
+              echo "  $key: $value"
+              echo "$key=$value" >> $GITHUB_OUTPUT
+            done < <(yq eval '. | to_entries | .[] | "\(.key)=\(.value)"' config.yaml)
+          }
+
+  unit_test_java:
+    name: Test Java
+    needs: gather_information
+    uses: phu-ng/cicd-scripts/.github/workflows/unit_test_java.yaml@main
+    with:
+      java_version: ${{ needs.gather_information.outputs.language_version }}
+      command: ${{ needs.gather_information.outputs.test_command }}
+
+  build_java:
+    name: Build Java
+    needs: [unit_test_java, gather_information]
+    uses: phu-ng/cicd-scripts/.github/workflows/build_java.yaml@main
+    with:
+      java_version: ${{ needs.gather_information.outputs.language_version }}
+      command: ${{ needs.gather_information.outputs.build_command }}
+
+  build_image:
+    name: Build Docker Image
+    needs: [build_java, gather_information]
+    uses: phu-ng/cicd-scripts/.github/workflows/build_image.yaml@main
+    with:
+      app_name: ${{ needs.gather_information.outputs.app_name }}
+      dockerfile_location: ${{ needs.gather_information.outputs.build_command }}
+      tag: ${{ needs.gather_information.outputs.short_sha }}
+      artifact_path: ${{ needs.gather_information.outputs.artifact_path }}
+
+  deploy_dev:
+    name: Deploy to Dev
+    needs: [build_image, gather_information]
+    if: github.ref_name == 'develop' || github.ref_name == 'main'
+    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    with:
+      app_name: ${{ needs.gather_information.outputs.app_name }}
+      tag: ${{ needs.gather_information.outputs.short_sha }}
+      namespace: ${{ needs.gather_information.outputs.namespace }}
+      helm_chart: "generic"
+      values_file_location: "deployments/${{ needs.gather_information.outputs.deploy_env }}/${{ github.event.repository.name }}"
+
+#  deploy_staging:
+#    name: Deploy to Staging
+#    needs: [ build_image, gather_information ]
+#    if: startsWith(github.ref_name, 'release/')
+#    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
+#    secrets:
+#      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+#    with:
+#      app_name: ${{ needs.gather_information.outputs.app_name }}
+#      tag: ${{ needs.gather_information.outputs.short_sha }}
+#      namespace: ${{ needs.gather_information.outputs.namespace }}
+#      helm_chart: "generic"
+#      values_file_location: "deployments/dev/ad"
