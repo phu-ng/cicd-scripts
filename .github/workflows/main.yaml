@@ -167,6 +167,8 @@ jobs:
 
   gather_information_prod:
     name: Gather Information from Prod
+    needs: manual_approval
+    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     outputs:
