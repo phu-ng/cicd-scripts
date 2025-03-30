@@ -80,34 +80,38 @@ jobs:
             done < <(yq eval '. | to_entries | .[] | "\(.key)=\(.value)"' config.yaml)
           }
 
-  unit_test_java:
-    name: Test Java
+  unit_test:
+    name: Unit Test
     needs: gather_information
-    uses: phu-ng/cicd-scripts/.github/workflows/unit_test_java.yaml@main
+    uses: phu-ng/cicd-scripts/.github/workflows/unit_test.yaml@main
     with:
-      java_version: ${{ needs.gather_information.outputs.language_version }}
+      language: ${{ needs.gather_information.outputs.language }}
+      language_version: ${{ needs.gather_information.outputs.language_version }}
       command: ${{ needs.gather_information.outputs.test_command }}
 
-  build_java:
-    name: Build Java
-    needs: [unit_test_java, gather_information]
-    uses: phu-ng/cicd-scripts/.github/workflows/build_java.yaml@main
+  build_code:
+    name: Build Code
+    needs: [gather_information, unit_test]
+    uses: phu-ng/cicd-scripts/.github/workflows/build_code.yaml@main
     with:
-      java_version: ${{ needs.gather_information.outputs.language_version }}
+      language: ${{ needs.gather_information.outputs.language }}
+      language_version: ${{ needs.gather_information.outputs.language_version }}
       command: ${{ needs.gather_information.outputs.build_command }}
+      artifact_path: ${{ needs.gather_information.outputs.artifact_path }}
 
   build_image:
     name: Build Docker Image
-    needs: [build_java, gather_information]
+    needs: [build_code, gather_information]
+    if: github.ref_name == 'develop' || github.ref_name == 'main'
     uses: phu-ng/cicd-scripts/.github/workflows/build_image.yaml@main
     with:
       app_name: ${{ needs.gather_information.outputs.app_name }}
-      dockerfile_location: ${{ needs.gather_information.outputs.build_command }}
+      dockerfile_location: ${{ needs.gather_information.outputs.dockerfile_location }}
       tag: ${{ needs.gather_information.outputs.short_sha }}
       artifact_path: ${{ needs.gather_information.outputs.artifact_path }}
 
-  deploy_dev:
-    name: Deploy to Dev
+  deploy:
+    name: Deploy
     needs: [build_image, gather_information]
     if: github.ref_name == 'develop' || github.ref_name == 'main'
     uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main

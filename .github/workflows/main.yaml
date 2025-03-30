@@ -6,6 +6,11 @@ on:
       GH_TOKEN:
         required: true
 
+env:
+  RUNNER_NON_PROD_ROLE_ARN: arn:aws:iam::817667413626:role/GitHubRunner
+  REGION: ap-southeast-1
+  ECR_NON_PROD_URI: 817667413626.dkr.ecr.ap-southeast-1.amazonaws.com
+
 jobs:
   gather_information:
     name: Gather Information
@@ -106,7 +111,7 @@ jobs:
     uses: phu-ng/cicd-scripts/.github/workflows/build_image.yaml@main
     with:
       app_name: ${{ needs.gather_information.outputs.app_name }}
-      dockerfile_location: ${{ needs.gather_information.outputs.build_command }}
+      dockerfile_location: ${{ needs.gather_information.outputs.dockerfile_location }}
       tag: ${{ needs.gather_information.outputs.short_sha }}
       artifact_path: ${{ needs.gather_information.outputs.artifact_path }}
 
@@ -123,6 +128,27 @@ jobs:
       namespace: ${{ needs.gather_information.outputs.namespace }}
       helm_chart: "generic"
       values_file_location: "deployments/${{ needs.gather_information.outputs.deploy_env }}/${{ github.event.repository.name }}"
+
+  manual_approval:
+    name: Approval to Production
+    needs: [deploy, gather_information]
+    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    environment:
+      name: production
+    steps:
+      - name: Waiting for approval
+        run: echo "Waiting ..."
+
+  promote:
+    name: Promote
+    needs: [manual_approval, gather_information]
+    if: startsWith(github.ref_name, 'release/') || github.ref_name == 'main'
+    uses: phu-ng/cicd-scripts/.github/workflows/deploy.yaml@main
+    with:
+      registry_url: "${{ env.ECR_NON_PROD_URI }}/${{ github.event.repository.name }}"
+      tag: ${{ needs.gather_information.outputs.short_sha }}
 
 #  deploy_staging:
 #    name: Deploy to Staging

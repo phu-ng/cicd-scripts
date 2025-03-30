@@ -1,0 +1,19 @@
+name: Promote Build to Production
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        default: "dev"
+      registry_url:
+        type: string
+        required: true
+
+jobs:
+  promote:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Promote Image to Production ECR
+        run: echo "Promote to ${{ registry_url }}:${{ tag }}"
