@@ -16,4 +16,4 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Promote Image to Production ECR
-        run: echo "Promote to ${{ registry_url }}:${{ tag }}"
+        run: echo "Promote to ${{ inputs.registry_url }}:${{ inputs.tag }}"
